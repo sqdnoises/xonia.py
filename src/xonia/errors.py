@@ -20,7 +20,13 @@ class CredentialsError(XoniaException):
 
 
 class NotConnectedError(XoniaException):
-    """An exception that is raise"""
+    """An exception that is raised when the client isn't connected yet."""
+
+    def __init__(self, message: str | None = None) -> None:
+        if message is None:
+            message = "The client isn't connected yet"
+        
+        super().__init__(message)
 
 
 class UnknownEvent(XoniaException):
