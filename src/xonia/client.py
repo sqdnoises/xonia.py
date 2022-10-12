@@ -1,9 +1,13 @@
+import json
+import time
 import aiohttp
-
-from . import config
+import asyncio
+from datetime import datetime
+from .config import API_URL, USER_DATE_FORMAT
 from .credentials import Credentials
-from .models import Message
-from .errors import NotConnectedError
+from .user import User
+from .asset import Asset
+from .errors import CredentialsError, CredentialsHTTPError
 
 __all__ = [
     "Client",
@@ -12,25 +16,109 @@ __all__ = [
 class Client:
     """Represents a Xonia client"""
 
-    def __init__(self) -> None:
-        self._session = aiohttp.ClientSession()
-        self._is_connected = False
+    def __init__(
+        self,
+        credentials: Credentials
+    ) -> None:
+        self.credentials = credentials
+        self.user = self.credentials.user
+        self.latency = 0
+        self._events = {}
+        self._info = {}
+        self.loop = asyncio.new_event_loop()
+        self._is_ready = False
     
-    async def connect(self, email: str, password: str) -> None:
-        self._token = await self.get_token(email, password)
-        self._is_connected = True
+    def __str__(self) -> str:
+        return self.user
+    
+    async def get_user(self) -> User:
+        """
+        Get user with set credentials
 
-    async def get_token(self, email: str, password: str) -> str:
-        """Get the token using :code:`_creds`."""
+        Returns:
+            User: user
+        """
+        try:
+            await self.credentials.get_token()
+            async with aiohttp.ClientSession() as session:
+                async with session.get(
+                    API_URL/"account",
+                    headers = {
+                        "Cookie": f"xonia-auth={self.credentials.token.xonia_auth}"
+                    }
+                ) as response:
+                    if response.status == 200:
+                        user = json.loads(await response.text())
+                        self.user = User(
+                            id = int(user["id"]),
+                            created_at = datetime.strptime(user["createdAt"], USER_DATE_FORMAT),
+                            updated_at = datetime.strptime(user["updatedAt"], USER_DATE_FORMAT),
+                            name = user["username"],
+                            email = user["email"],
+                            avatar = Asset(url = user["image"]),
+                            is_online = user["isOnline"]
+                        )
+                        return self.user
+                    elif response.status == 401:
+                        raise CredentialsError
+                    else:
+                        raise CredentialsHTTPError(response=response)
+        except Exception as e:
+            self.fire_event("on_error", error=e)
 
-        if not self._
+    def event(self, func) -> None:
+        """
+        Event handler
+        """
+        name = func.__name__
+        if name == "before_ready" or name == "on_ready" or name == "on_disconnect" or name == "on_error":
+            self._events.update({
+                name: func
+            })
+        return func
 
-        res = await self._session.post(
-            config.API_URL / "account" / "login",
-            json={
-                "email": email,
-                "password": password,
-            },
-        )
+    def fire_event(self, event_name: str, **kwargs) -> None:
+        """
+        Fire an event
+        """
+        if event_name in self._events:
+            self.loop.create_task(self._events[event_name](**kwargs))
+    
+    def edit_info(self, v1, v2) -> None:
+        """
+        Edit info
+        """
+        if v1 in self._events:
+            self._info.update({
+                v1: v2
+            })
+    
+    async def check_connectivity(self):
+        """
+        Check connectivity
+        """
+        while True:
+            try:
+                async with aiohttp.ClientSession() as session:
+                    t1 = time.monotonic()
+                    await session.get(API_URL/"ping")
+                    t2 = time.monotonic()
+            except Exception as e:
+                self.fire_event("on_error", error=e)
+                if self._is_ready:
+                    self.fire_event("on_disconnect")
+                    self._is_ready = False
+            else:
+                if not self._is_ready:
+                    self.fire_event("on_ready")
+                    self._is_ready = True
+                self.latency = t2 - t1
+            await asyncio.sleep(5)
 
-        return res.headers["Set-Cookie"].split(";")[0]
+    def start(self) -> None:
+        """
+        Start the client
+        """
+        self.loop.run_until_complete(self.get_user())
+
+        self.loop.run_until_complete(self.check_connectivity())
