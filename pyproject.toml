@@ -4,19 +4,31 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "xonia.py"
-version = "0.0.0b"
+version = "0.1.0"
 authors = [
-  { name="sqdnoises", email="sqdnoises.ash@gmail.com" },
+    { name="sqdnoises", email="sqdnoises.ash@gmail.com" },
 ]
 description = "xonia.py - An easy to use, and async API wrapper for Xonia written in Python."
 readme = "README.md"
-requires-python = ">=3.10"
+license = { file = "LICENSE" }
+requires-python = ">=3.8"
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
+keywords = [
+    "xonia",
+    "api",
+    "wrapper",
+    "async"
+]
+dependencies = [
+    "aiohttp",
+    "aiodns",
+    "yarl",
+    "requests"
+]
 
 [project.urls]
 "Homepage" = "https://github.com/sqdnoises/xonia.py"
-"Bug Tracker" = "https://github.com/sqdnoises/xonia.py/issues"

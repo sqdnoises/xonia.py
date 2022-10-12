@@ -1,6 +1,6 @@
 **/__pycache__/
 .venv/
 tests/
-dist/
-src/xonia.py.egg-info/
 src/test.py
+src/xonia.py.egg-info/
+dist/
