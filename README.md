@@ -8,7 +8,7 @@
 ## Contents
 - [`Documentation`](#documentation)
 - [`Installation`](#installation)
-- [`Installation`](#installation)
+- [`Basic Usage`](#basic-usage)
 - [`Uninstall`](#uninstall)
 
 ## Documentation
