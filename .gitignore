@@ -1,6 +1,5 @@
 **/__pycache__/
 .venv/
-.testsvenv/
 tests/
 src/test.py
 src/xonia.py.egg-info/
