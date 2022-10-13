@@ -6,6 +6,7 @@
 **xonia.py** - An easy to use, and async API wrapper for [Xonia](https://xoniaapp.com/) written in Python.
 
 ## Contents
+- [`Contents`](#contents)
 - [`Documentation`](#documentation)
 - [`Installation`](#installation)
 - [`Basic Usage`](#basic-usage)
