@@ -32,7 +32,7 @@ class Token(object):
     """
     def __init__(self, cookie_dict: dict):
         for value in cookie_dict:
-            setattr(self, value, cookie_dict[value])
+            setattr(self, value, cookie_dict[value]) # set all values passed in cookie_dict
     
     def __str__(self) -> str:
         return self.xonia_auth
