@@ -50,6 +50,7 @@ class Credentials(object):
         self.user = None
     
     def __str__(self) -> str:
+        # return email if user is none, otherwise username
         return self.email if self.user == None else str(self.user)
 
     async def get_token(self) -> str:
@@ -68,6 +69,7 @@ class Credentials(object):
                 }
             ) as response:
                 if response.status == 200:
+                    # if response status is 200, make a new user
                     token_cookie = str(response.cookies.get("xonia-auth"))
                     user = json.loads(await response.text())
                     self.user = User(
@@ -80,13 +82,17 @@ class Credentials(object):
                         is_online = user["isOnline"]
                     )
                 elif response.status == 401:
+                    # if response status is 401, raise CredentialsError
                     raise CredentialsError
                 else:
+                    # if response status is not 200 or 401, raise CredentialsHTTPError
                     raise CredentialsHTTPError(response=response)
+        # setting cookie value in cookie dict
         cookie = {}
         for x in token_cookie.replace("Set-Cookie: ", "").split("; "):
             x = x.split("=") if "=" in x else [x, True]
             cookie.update({x[0]: x[1]})
+        # cookie dict to pass to Token class
         token = {}
         for x in cookie:
             token.update({x.replace("-", "_"): cookie[x]})
